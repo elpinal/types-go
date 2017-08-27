@@ -247,3 +247,53 @@ func (ti *TI) mgu(t1, t2 Type) Subst {
 	}
 	return nil
 }
+
+func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type) {
+	switch e := expr.(type) {
+	case *EVar:
+		sigma, ok := env[e.name]
+		if !ok {
+			panic("unbound variable: " + e.name)
+		}
+		return nil, ti.instantiate(sigma)
+	case *EInt:
+		return nil, &TInt{}
+	case *EBool:
+		return nil, &TBool{}
+	case *EApp:
+		tv := ti.newTypeVar("a")
+		s1, t1 := ti.ti(env, e.fn)
+		s2, t2 := ti.ti(*env.apply(s1).(*TypeEnv), e.arg)
+		s3 := ti.mgu(t1.apply(s2).(Type), &TFun{arg: t2, body: tv})
+		s := s3.compose(s2)
+		return s.compose(s1), tv.apply(s3).(Type)
+	case *EAbs:
+		tv := ti.newTypeVar("a")
+		env1 := make(TypeEnv, len(env))
+		for k, v := range env {
+			if k != e.param {
+				env1[k] = v
+			}
+		}
+		env2 := make(TypeEnv, len(env1))
+		for k, v := range env1 {
+			env2[k] = v
+		}
+		if _, found := env2[e.param]; !found {
+			env2[e.param] = Scheme{t: tv}
+		}
+		s1, t1 := ti.ti(env2, e.expr)
+		return s1, &TFun{arg: tv.apply(s1).(Type), body: t1}
+	case *ELet:
+		s1, t1 := ti.ti(env, e.bind)
+		t := env.apply(s1).(*TypeEnv).generalize(t1)
+		env1 := make(TypeEnv, len(env))
+		for k, v := range env {
+			env1[k] = v
+		}
+		env1[e.name] = t
+		s2, t2 := ti.ti(*env1.apply(s1).(*TypeEnv), e.expr)
+		return s1.compose(s2), t2
+	}
+	panic("unreachable")
+}
