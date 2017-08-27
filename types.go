@@ -80,4 +80,42 @@ func (f *Fun) apply(s Subst) Types {
 	}
 }
 
+type Expr interface {
+	Expr()
+}
+
+type EVar struct {
+	name string
+}
+
+type EInt struct {
+	value int
+}
+
+type EBool struct {
+	value bool
+}
+
+type EApp struct {
+	fn, arg Expr
+}
+
+type EAbs struct {
+	param string
+	expr  Expr
+}
+
+type ELet struct {
+	name string
+	bind Expr
+	expr Expr
+}
+
+func (e *EVar) Expr()  {}
+func (e *EInt) Expr()  {}
+func (e *EBool) Expr() {}
+func (e *EApp) Expr()  {}
+func (e *EAbs) Expr()  {}
+func (e *ELet) Expr()  {}
+
 type Subst map[string]Type
