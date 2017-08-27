@@ -230,3 +230,20 @@ func (ti *TI) varBind(u string, t Type) Subst {
 	}
 	panic(fmt.Sprintf("occur check fails: %s vs. %v", u, t))
 }
+
+func (ti *TI) mgu(t1, t2 Type) Subst {
+	switch x := t1.(type) {
+	case *TFun:
+		if y, ok := t2.(*TFun); ok {
+			s1 := ti.mgu(x.arg, y.arg)
+			s2 := ti.mgu(x.body.apply(s1).(Type), y.body.apply(s1).(Type))
+			return s1.compose(s2)
+		}
+		if v, ok := t2.(*TVar); ok {
+			return ti.varBind(v.name, t1)
+		}
+	case *TVar:
+		return ti.varBind(x.name, t2)
+	}
+	return nil
+}
