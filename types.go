@@ -10,36 +10,36 @@ type Type interface {
 	Types
 }
 
-type Var struct {
+type TVar struct {
 	name string
 }
 
-type Int struct{}
+type TInt struct{}
 
-type Bool struct{}
+type TBool struct{}
 
-type Fun struct {
+type TFun struct {
 	arg, body Type
 }
 
-func (v *Var) Type()  {}
-func (i *Int) Type()  {}
-func (b *Bool) Type() {}
-func (f *Fun) Type()  {}
+func (v *TVar) Type()  {}
+func (i *TInt) Type()  {}
+func (b *TBool) Type() {}
+func (f *TFun) Type()  {}
 
-func (v *Var) ftv() []string {
+func (v *TVar) ftv() []string {
 	return []string{v.name}
 }
 
-func (i *Int) ftv() []string {
+func (i *TInt) ftv() []string {
 	return nil
 }
 
-func (b *Bool) ftv() []string {
+func (b *TBool) ftv() []string {
 	return nil
 }
 
-func (f *Fun) ftv() []string {
+func (f *TFun) ftv() []string {
 	vars := f.arg.ftv()
 	for _, v := range f.body.ftv() {
 		if !contains(vars, v) {
@@ -58,23 +58,23 @@ func contains(xs []string, x string) bool {
 	return false
 }
 
-func (v *Var) apply(s Subst) Types {
+func (v *TVar) apply(s Subst) Types {
 	if t, ok := s[v.name]; ok {
 		return t
 	}
 	return v
 }
 
-func (i *Int) apply(s Subst) Types {
+func (i *TInt) apply(s Subst) Types {
 	return i
 }
 
-func (b *Bool) apply(s Subst) Types {
+func (b *TBool) apply(s Subst) Types {
 	return b
 }
 
-func (f *Fun) apply(s Subst) Types {
-	return &Fun{
+func (f *TFun) apply(s Subst) Types {
+	return &TFun{
 		arg:  f.arg.apply(s).(Type),
 		body: f.body.apply(s).(Type),
 	}
