@@ -1,6 +1,9 @@
 package types
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 type Types interface {
 	ftv() []string
@@ -216,4 +219,14 @@ func (ti *TI) instantiate(s Scheme) Type {
 		m[v] = ti.newTypeVar("a")
 	}
 	return s.t.apply(m).(Type)
+}
+
+func (ti *TI) varBind(u string, t Type) Subst {
+	if x, ok := t.(*TVar); ok && x.name == u {
+		return nil
+	}
+	if !contains(t.ftv(), u) {
+		return Subst{u: t}
+	}
+	panic(fmt.Sprintf("occur check fails: %s vs. %v", u, t))
 }
