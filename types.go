@@ -1,5 +1,7 @@
 package types
 
+import "strconv"
+
 type Types interface {
 	ftv() []string
 	apply(Subst) Types
@@ -196,4 +198,14 @@ func (env *TypeEnv) apply(s Subst) Types {
 		(*env)[k] = *v.apply(s).(*Scheme)
 	}
 	return env
+}
+
+type TI struct {
+	supply uint
+}
+
+func (ti *TI) newTypeVar(s string) Type {
+	n := ti.supply
+	ti.supply++
+	return &TVar{name: s + strconv.Itoa(int(n))}
 }
