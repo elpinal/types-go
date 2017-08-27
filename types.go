@@ -209,3 +209,11 @@ func (ti *TI) newTypeVar(s string) Type {
 	ti.supply++
 	return &TVar{name: s + strconv.Itoa(int(n))}
 }
+
+func (ti *TI) instantiate(s Scheme) Type {
+	m := make(map[string]Type, len(s.vars))
+	for _, v := range s.vars {
+		m[v] = ti.newTypeVar("a")
+	}
+	return s.t.apply(m).(Type)
+}
