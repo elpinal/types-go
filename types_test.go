@@ -59,3 +59,29 @@ func TestTypeApply(t *testing.T) {
 		}
 	}
 }
+
+func TestComposeSubst(t *testing.T) {
+	tests := []struct {
+		s1   Subst
+		s2   Subst
+		want Subst
+	}{
+		{
+			s1: Subst{
+				"a": &TVar{"b"},
+				"c": &TVar{"d"},
+			},
+			s2: Subst{"a": &TFun{&TVar{"a"}, &TVar{"b"}}},
+			want: Subst{
+				"a": &TFun{&TVar{"b"}, &TVar{"b"}},
+				"c": &TVar{"d"},
+			},
+		},
+	}
+	for _, test := range tests {
+		got := test.s1.compose(test.s2)
+		if !reflect.DeepEqual(got, test.want) {
+			t.Errorf("Subst.compose: got %v, want %v", got, test.want)
+		}
+	}
+}
