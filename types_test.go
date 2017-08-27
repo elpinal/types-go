@@ -30,3 +30,32 @@ func TestTypeFTV(t *testing.T) {
 		}
 	}
 }
+
+func TestTypeApply(t *testing.T) {
+	tests := []struct {
+		t    Type
+		s    Subst
+		want Type
+	}{
+		{
+			t:    &TVar{name: "a"},
+			s:    Subst{"a": &TInt{}},
+			want: &TInt{},
+		},
+		{
+			t:    &TInt{},
+			want: &TInt{},
+		},
+		{
+			t:    &TFun{arg: &TVar{name: "c"}, body: &TVar{name: "b"}},
+			s:    Subst{"c": &TVar{name: "a"}},
+			want: &TFun{arg: &TVar{name: "a"}, body: &TVar{name: "b"}},
+		},
+	}
+	for _, test := range tests {
+		got := test.t.apply(test.s).(Type)
+		if !reflect.DeepEqual(got, test.want) {
+			t.Errorf("apply on Type: got %v, want %v", got, test.want)
+		}
+	}
+}
