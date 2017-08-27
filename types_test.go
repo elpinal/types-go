@@ -14,6 +14,14 @@ func TestTypeFTV(t *testing.T) {
 			t:    &TVar{name: "a"},
 			want: []string{"a"},
 		},
+		{
+			t:    &TInt{},
+			want: nil,
+		},
+		{
+			t:    &TFun{arg: &TInt{}, body: &TVar{name: "a"}},
+			want: []string{"a"},
+		},
 	}
 	for _, test := range tests {
 		got := test.t.ftv()
