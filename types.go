@@ -161,3 +161,39 @@ func (s *Scheme) apply(sub Subst) Types {
 		t:    s.t.apply(m).(Type),
 	}
 }
+
+type TypeEnv map[string]Scheme
+
+func (env *TypeEnv) generalize(t Type) Scheme {
+	tftv := t.ftv()
+	eftv := env.ftv()
+	vars := make([]string, 0, len(tftv))
+	for _, x := range tftv {
+		if !contains(eftv, x) {
+			vars = append(vars, x)
+		}
+	}
+	return Scheme{
+		vars: vars,
+		t:    t,
+	}
+}
+
+func (env *TypeEnv) ftv() []string {
+	ret := make([]string, len(*env))
+	for _, s := range *env {
+		for _, v := range s.ftv() {
+			if !contains(ret, v) {
+				ret = append(ret, v)
+			}
+		}
+	}
+	return ret
+}
+
+func (env *TypeEnv) apply(s Subst) Types {
+	for k, v := range *env {
+		(*env)[k] = *v.apply(s).(*Scheme)
+	}
+	return env
+}
