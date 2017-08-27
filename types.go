@@ -132,3 +132,32 @@ func (s *Subst) compose(s0 Subst) Subst {
 	}
 	return m
 }
+
+type Scheme struct {
+	vars []string
+	t    Type
+}
+
+func (s *Scheme) ftv() []string {
+	list := s.t.ftv()
+	ret := make([]string, 0, len(list))
+	for _, x := range list {
+		if !contains(s.vars, x) {
+			ret = append(ret, x)
+		}
+	}
+	return ret
+}
+
+func (s *Scheme) apply(sub Subst) Types {
+	m := make(map[string]Type, len(sub))
+	for k, v := range sub {
+		if !contains(s.vars, k) {
+			m[k] = v
+		}
+	}
+	return &Scheme{
+		vars: s.vars,
+		t:    s.t.apply(m).(Type),
+	}
+}
