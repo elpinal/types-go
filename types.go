@@ -119,3 +119,16 @@ func (e *EAbs) Expr()  {}
 func (e *ELet) Expr()  {}
 
 type Subst map[string]Type
+
+func (s *Subst) compose(s0 Subst) Subst {
+	m := make(map[string]Type, len(s0))
+	for k, v := range s0 {
+		m[k] = v.apply(*s).(Type)
+	}
+	for k, v := range *s {
+		if _, found := m[k]; !found {
+			m[k] = v
+		}
+	}
+	return m
+}
