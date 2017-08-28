@@ -185,7 +185,7 @@ func (env *TypeEnv) generalize(t Type) Scheme {
 }
 
 func (env *TypeEnv) ftv() []string {
-	ret := make([]string, len(*env))
+	ret := make([]string, 0, len(*env))
 	for _, s := range *env {
 		for _, v := range s.ftv() {
 			if !contains(ret, v) {

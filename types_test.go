@@ -85,3 +85,20 @@ func TestComposeSubst(t *testing.T) {
 		}
 	}
 }
+
+func TestTypeEnvFTV(t *testing.T) {
+	s := Scheme{
+		vars: []string{"a"},
+		t: &TFun{
+			&TVar{"b"},
+			&TVar{"a"},
+		},
+	}
+	m := map[string]Scheme{"b": s}
+	e := TypeEnv(m)
+	got := e.ftv()
+	want := []string{"b"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("ftv on TypeEnv: got %#v, want %#v", got, want)
+	}
+}
