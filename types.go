@@ -125,14 +125,13 @@ func (e *ELet) Expr()  {}
 
 type Subst map[string]Type
 
+// compose composes two Subst.
+// Note that this method destroys a receiver's value.
 func (s *Subst) compose(s0 Subst) Subst {
-	m := make(map[string]Type, len(s0))
 	if len(*s) == 0 {
-		for k, v := range s0 {
-			m[k] = v
-		}
-		return m
+		return s0
 	}
+	m := make(map[string]Type, len(s0))
 	for k, v := range s0 {
 		m[k] = v.apply(*s).(Type)
 	}
