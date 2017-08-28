@@ -294,14 +294,8 @@ func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type) {
 				env1[k] = v
 			}
 		}
-		env2 := make(TypeEnv, len(env1))
-		for k, v := range env1 {
-			env2[k] = v
-		}
-		if _, found := env2[e.param]; !found {
-			env2[e.param] = Scheme{t: tv}
-		}
-		s1, t1 := ti.ti(env2, e.expr)
+		env1[e.param] = Scheme{t: tv}
+		s1, t1 := ti.ti(env1, e.expr)
 		return s1, &TFun{arg: tv.apply(s1).(Type), body: t1}
 	case *ELet:
 		s1, t1 := ti.ti(env, e.bind)
