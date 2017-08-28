@@ -127,6 +127,12 @@ type Subst map[string]Type
 
 func (s *Subst) compose(s0 Subst) Subst {
 	m := make(map[string]Type, len(s0))
+	if len(*s) == 0 {
+		for k, v := range s0 {
+			m[k] = v
+		}
+		return m
+	}
 	for k, v := range s0 {
 		m[k] = v.apply(*s).(Type)
 	}
