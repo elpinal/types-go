@@ -242,6 +242,6 @@ var bigExpr = &ELet{
 func BenchmarkTITypeInferenceBigExpr(b *testing.B) {
 	ti := TI{}
 	for i := 0; i < b.N; i++ {
-		ti.typeInference(TypeEnv{}, &EAbs{"x", &EApp{bigExpr, &EInt{}}})
+		ti.typeInference(TypeEnv{}, &EAbs{"x", &EApp{&EApp{bigExpr, &EInt{}}, &EAbs{"x", bigExpr}}})
 	}
 }
