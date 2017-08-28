@@ -290,9 +290,7 @@ func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type) {
 		tv := ti.newTypeVar("a")
 		env1 := make(TypeEnv, len(env))
 		for k, v := range env {
-			if k != e.param {
-				env1[k] = v
-			}
+			env1[k] = v
 		}
 		env1[e.param] = Scheme{t: tv}
 		s1, t1 := ti.ti(env1, e.expr)
