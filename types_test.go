@@ -253,3 +253,12 @@ func BenchmarkTFV(b *testing.B) {
 		t.ftv()
 	}
 }
+
+func BenchmarkMGU(b *testing.B) {
+	ti := TI{}
+	t := ti.TypeInference(TypeEnv{}, &EAbs{"x", &EApp{&EApp{bigExpr, &EInt{}}, &EAbs{"x", bigExpr}}})
+	t0 := ti.TypeInference(TypeEnv{}, &EAbs{"x", &EApp{&EApp{bigExpr, &EInt{}}, &EAbs{"x", bigExpr}}})
+	for i := 0; i < b.N; i++ {
+		ti.mgu(t, t0)
+	}
+}
