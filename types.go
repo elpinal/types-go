@@ -244,8 +244,22 @@ func (ti *TI) mgu(t1, t2 Type) Subst {
 		}
 	case *TVar:
 		return ti.varBind(x.name, t2)
+	case *TInt:
+		switch y := t2.(type) {
+		case *TVar:
+			return ti.varBind(y.name, t1)
+		case *TInt:
+			return nil
+		}
+	case *TBool:
+		switch y := t2.(type) {
+		case *TVar:
+			return ti.varBind(y.name, t1)
+		case *TBool:
+			return nil
+		}
 	}
-	return nil
+	panic(fmt.Sprintf("types do not unify: %#v vs. %#v", t1, t2))
 }
 
 func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type) {

@@ -163,3 +163,50 @@ func TestTINewTypeVar(t *testing.T) {
 		}
 	}
 }
+
+func TestTITypeInference(t *testing.T) {
+	tests := []struct {
+		name string
+		env  TypeEnv
+		expr Expr
+		want Type
+	}{
+		{
+			name: "int",
+			env:  TypeEnv{},
+			expr: &EInt{12},
+			want: &TInt{},
+		},
+		{
+			name: "let int",
+			env:  TypeEnv{},
+			expr: &ELet{"n", &EInt{12}, &EVar{"n"}},
+			want: &TInt{},
+		},
+		{
+			name: "let function",
+			env:  TypeEnv{},
+			expr: &ELet{"f", &EAbs{"x", &EVar{"x"}}, &EVar{"f"}},
+			want: &TFun{&TVar{"a1"}, &TVar{"a1"}},
+		},
+		{
+			name: "let function and apply it",
+			env:  TypeEnv{},
+			expr: &ELet{"x", &EAbs{"x", &EVar{"x"}}, &EApp{&EVar{"x"}, &EVar{"x"}}},
+			want: &TFun{&TVar{"a5"}, &TVar{"a5"}},
+		},
+		{
+			name: "let function and ignore an argument",
+			env:  TypeEnv{},
+			expr: &ELet{"length", &EAbs{"xs", &EInt{12}}, &EApp{&EVar{"length"}, &EVar{"length"}}},
+			want: &TInt{},
+		},
+	}
+	ti := TI{}
+	for _, test := range tests {
+		got := ti.typeInference(test.env, test.expr)
+		if !reflect.DeepEqual(got, test.want) {
+			t.Errorf("%s: typeInference = %#v; want %#v", test.name, got, test.want)
+		}
+	}
+}
