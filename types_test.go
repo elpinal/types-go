@@ -245,3 +245,11 @@ func BenchmarkTITypeInferenceBigExpr(b *testing.B) {
 		ti.TypeInference(TypeEnv{}, &EAbs{"x", &EApp{&EApp{bigExpr, &EInt{}}, &EAbs{"x", bigExpr}}})
 	}
 }
+
+func BenchmarkTFV(b *testing.B) {
+	ti := TI{}
+	t := ti.TypeInference(TypeEnv{}, &EAbs{"x", &EApp{&EApp{bigExpr, &EInt{}}, &EAbs{"x", bigExpr}}})
+	for i := 0; i < b.N; i++ {
+		t.ftv()
+	}
+}
