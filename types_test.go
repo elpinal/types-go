@@ -204,9 +204,9 @@ func TestTITypeInference(t *testing.T) {
 	}
 	ti := TI{}
 	for _, test := range tests {
-		got := ti.typeInference(test.env, test.expr)
+		got := ti.TypeInference(test.env, test.expr)
 		if !reflect.DeepEqual(got, test.want) {
-			t.Errorf("%s: typeInference = %#v; want %#v", test.name, got, test.want)
+			t.Errorf("%s: TypeInference = %#v; want %#v", test.name, got, test.want)
 		}
 	}
 }
@@ -214,7 +214,7 @@ func TestTITypeInference(t *testing.T) {
 func BenchmarkTITypeInference(b *testing.B) {
 	ti := TI{}
 	for i := 0; i < b.N; i++ {
-		ti.typeInference(TypeEnv{}, &ELet{"x", &EAbs{"x", &EVar{"x"}}, &EApp{&EVar{"x"}, &EVar{"x"}}})
+		ti.TypeInference(TypeEnv{}, &ELet{"x", &EAbs{"x", &EVar{"x"}}, &EApp{&EVar{"x"}, &EVar{"x"}}})
 	}
 }
 
@@ -242,6 +242,6 @@ var bigExpr = &ELet{
 func BenchmarkTITypeInferenceBigExpr(b *testing.B) {
 	ti := TI{}
 	for i := 0; i < b.N; i++ {
-		ti.typeInference(TypeEnv{}, &EAbs{"x", &EApp{&EApp{bigExpr, &EInt{}}, &EAbs{"x", bigExpr}}})
+		ti.TypeInference(TypeEnv{}, &EAbs{"x", &EApp{&EApp{bigExpr, &EInt{}}, &EAbs{"x", bigExpr}}})
 	}
 }
