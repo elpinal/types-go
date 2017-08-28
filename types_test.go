@@ -99,6 +99,32 @@ func TestTypeEnvFTV(t *testing.T) {
 	got := e.ftv()
 	want := []string{"b"}
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("ftv on TypeEnv: got %#v, want %#v", got, want)
+		t.Errorf("ftv on TypeEnv: got %v, want %v", got, want)
+	}
+}
+
+func TestTypeEnvApply(t *testing.T) {
+	s := Scheme{
+		vars: []string{"a"},
+		t: &TFun{&TVar{"a"},
+			&TVar{"c"},
+		},
+	}
+	m := Subst{
+		"c": &TVar{"a"},
+		"a": &TVar{"d"},
+	}
+	e := TypeEnv{"b": s}
+	got := e.apply(m).(*TypeEnv)
+	want := &TypeEnv{
+		"b": Scheme{
+			vars: []string{("a")},
+			t: &TFun{&TVar{"a"},
+				&TVar{"a"},
+			},
+		},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("apply on TypeEnv: got %v, want %v", got, want)
 	}
 }
