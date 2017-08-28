@@ -226,23 +226,29 @@ func (ti *TI) instantiate(s Scheme) Type {
 	return s.t.apply(m).(Type)
 }
 
-func (ti *TI) varBind(u string, t Type) Subst {
+func (ti *TI) varBind(u string, t Type) (Subst, error) {
 	if x, ok := t.(*TVar); ok && x.name == u {
-		return nil
+		return nil, nil
 	}
 	if !contains(t.ftv(), u) {
-		return Subst{u: t}
+		return Subst{u: t}, nil
 	}
-	panic(fmt.Sprintf("occur check fails: %s vs. %v", u, t))
+	return nil, fmt.Errorf("occur check fails: %s vs. %v", u, t)
 }
 
-func (ti *TI) mgu(t1, t2 Type) Subst {
+func (ti *TI) mgu(t1, t2 Type) (Subst, error) {
 	switch x := t1.(type) {
 	case *TFun:
 		if y, ok := t2.(*TFun); ok {
-			s1 := ti.mgu(x.arg, y.arg)
-			s2 := ti.mgu(x.body.apply(s1).(Type), y.body.apply(s1).(Type))
-			return s1.compose(s2)
+			s1, err := ti.mgu(x.arg, y.arg)
+			if err != nil {
+				return nil, err
+			}
+			s2, err := ti.mgu(x.body.apply(s1).(Type), y.body.apply(s1).(Type))
+			if err != nil {
+				return nil, err
+			}
+			return s1.compose(s2), nil
 		}
 		if v, ok := t2.(*TVar); ok {
 			return ti.varBind(v.name, t1)
@@ -254,38 +260,47 @@ func (ti *TI) mgu(t1, t2 Type) Subst {
 		case *TVar:
 			return ti.varBind(y.name, t1)
 		case *TInt:
-			return nil
+			return nil, nil
 		}
 	case *TBool:
 		switch y := t2.(type) {
 		case *TVar:
 			return ti.varBind(y.name, t1)
 		case *TBool:
-			return nil
+			return nil, nil
 		}
 	}
-	panic(fmt.Sprintf("types do not unify: %#v vs. %#v", t1, t2))
+	return nil, fmt.Errorf("types do not unify: %#v vs. %#v", t1, t2)
 }
 
-func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type) {
+func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type, error) {
 	switch e := expr.(type) {
 	case *EVar:
 		sigma, ok := env[e.name]
 		if !ok {
-			panic("unbound variable: " + e.name)
+			return nil, nil, fmt.Errorf("unbound variable: %s", e.name)
 		}
-		return nil, ti.instantiate(sigma)
+		return nil, ti.instantiate(sigma), nil
 	case *EInt:
-		return nil, &TInt{}
+		return nil, &TInt{}, nil
 	case *EBool:
-		return nil, &TBool{}
+		return nil, &TBool{}, nil
 	case *EApp:
 		tv := ti.newTypeVar("a")
-		s1, t1 := ti.ti(env, e.fn)
-		s2, t2 := ti.ti(*env.apply(s1).(*TypeEnv), e.arg)
-		s3 := ti.mgu(t1.apply(s2).(Type), &TFun{arg: t2, body: tv})
+		s1, t1, err := ti.ti(env, e.fn)
+		if err != nil {
+			return nil, nil, err
+		}
+		s2, t2, err := ti.ti(*env.apply(s1).(*TypeEnv), e.arg)
+		if err != nil {
+			return nil, nil, err
+		}
+		s3, err := ti.mgu(t1.apply(s2).(Type), &TFun{arg: t2, body: tv})
+		if err != nil {
+			return nil, nil, err
+		}
 		s := s3.compose(s2)
-		return s.compose(s1), tv.apply(s3).(Type)
+		return s.compose(s1), tv.apply(s3).(Type), nil
 	case *EAbs:
 		tv := ti.newTypeVar("a")
 		env1 := make(TypeEnv, len(env))
@@ -293,23 +308,35 @@ func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type) {
 			env1[k] = v
 		}
 		env1[e.param] = Scheme{t: tv}
-		s1, t1 := ti.ti(env1, e.expr)
-		return s1, &TFun{arg: tv.apply(s1).(Type), body: t1}
+		s1, t1, err := ti.ti(env1, e.expr)
+		if err != nil {
+			return nil, nil, err
+		}
+		return s1, &TFun{arg: tv.apply(s1).(Type), body: t1}, nil
 	case *ELet:
-		s1, t1 := ti.ti(env, e.bind)
+		s1, t1, err := ti.ti(env, e.bind)
+		if err != nil {
+			return nil, nil, err
+		}
 		t := env.apply(s1).(*TypeEnv).generalize(t1)
 		env1 := make(TypeEnv, len(env))
 		for k, v := range env {
 			env1[k] = v
 		}
 		env1[e.name] = t
-		s2, t2 := ti.ti(*env1.apply(s1).(*TypeEnv), e.expr)
-		return s1.compose(s2), t2
+		s2, t2, err := ti.ti(*env1.apply(s1).(*TypeEnv), e.expr)
+		if err != nil {
+			return nil, nil, err
+		}
+		return s1.compose(s2), t2, nil
 	}
 	panic("unreachable")
 }
 
 func (ti *TI) TypeInference(env TypeEnv, expr Expr) Type {
-	s, t := ti.ti(env, expr)
+	s, t, err := ti.ti(env, expr)
+	if err != nil {
+		panic(err)
+	}
 	return t.apply(s).(Type)
 }
