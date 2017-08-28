@@ -217,3 +217,31 @@ func BenchmarkTITypeInference(b *testing.B) {
 		ti.typeInference(TypeEnv{}, &ELet{"x", &EAbs{"x", &EVar{"x"}}, &EApp{&EVar{"x"}, &EVar{"x"}}})
 	}
 }
+
+func createLet(bind Expr) *ELet {
+	return &ELet{
+		"x",
+		bind,
+		&EVar{"x"},
+	}
+}
+
+func repeatLet(bind *ELet, n uint) *ELet {
+	if n == 0 {
+		return bind
+	}
+	return createLet(repeatLet(bind, n-1))
+}
+
+var bigExpr = &ELet{
+	"x",
+	repeatLet(createLet(&EVar{"x"}), 100),
+	&EVar{"x"},
+}
+
+func BenchmarkTITypeInferenceBigExpr(b *testing.B) {
+	ti := TI{}
+	for i := 0; i < b.N; i++ {
+		ti.typeInference(TypeEnv{}, &EAbs{"x", &EApp{bigExpr, &EInt{}}})
+	}
+}
