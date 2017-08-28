@@ -210,3 +210,10 @@ func TestTITypeInference(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkTITypeInference(b *testing.B) {
+	ti := TI{}
+	for i := 0; i < b.N; i++ {
+		ti.typeInference(TypeEnv{}, &ELet{"x", &EAbs{"x", &EVar{"x"}}, &EApp{&EVar{"x"}, &EVar{"x"}}})
+	}
+}
