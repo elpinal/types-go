@@ -126,7 +126,7 @@ func (e *ELet) Expr()  {}
 type Subst map[string]Type
 
 // compose composes two Subst.
-// Note that this method destroys a receiver's value.
+// Note that this method can update a receiver's value.
 func (s *Subst) compose(s0 Subst) Subst {
 	if len(*s) == 0 {
 		return s0
