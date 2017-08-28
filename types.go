@@ -6,7 +6,7 @@ import (
 )
 
 type Types interface {
-	ftv() []string
+	ftv() map[string]struct{}
 	apply(Subst) Types
 }
 
@@ -32,24 +32,25 @@ func (i *TInt) Type()  {}
 func (b *TBool) Type() {}
 func (f *TFun) Type()  {}
 
-func (v *TVar) ftv() []string {
-	return []string{v.name}
+func (v *TVar) ftv() map[string]struct{} {
+	return map[string]struct{}{v.name: {}}
 }
 
-func (i *TInt) ftv() []string {
+func (i *TInt) ftv() map[string]struct{} {
 	return nil
 }
 
-func (b *TBool) ftv() []string {
+func (b *TBool) ftv() map[string]struct{} {
 	return nil
 }
 
-func (f *TFun) ftv() []string {
+func (f *TFun) ftv() map[string]struct{} {
 	vars := f.arg.ftv()
-	for _, v := range f.body.ftv() {
-		if !contains(vars, v) {
-			vars = append(vars, v)
-		}
+	if vars == nil {
+		return f.body.ftv()
+	}
+	for v := range f.body.ftv() {
+		vars[v] = struct{}{}
 	}
 	return vars
 }
@@ -144,25 +145,22 @@ func (s *Subst) compose(s0 Subst) Subst {
 }
 
 type Scheme struct {
-	vars []string
+	vars map[string]struct{}
 	t    Type
 }
 
-func (s *Scheme) ftv() []string {
-	list := s.t.ftv()
-	ret := make([]string, 0, len(list))
-	for _, x := range list {
-		if !contains(s.vars, x) {
-			ret = append(ret, x)
-		}
+func (s *Scheme) ftv() map[string]struct{} {
+	m := s.t.ftv()
+	for x := range s.vars {
+		delete(m, x)
 	}
-	return ret
+	return m
 }
 
 func (s *Scheme) apply(sub Subst) Types {
 	m := make(map[string]Type, len(sub))
 	for k, v := range sub {
-		if !contains(s.vars, k) {
+		if _, found := s.vars[k]; !found {
 			m[k] = v
 		}
 	}
@@ -175,13 +173,9 @@ func (s *Scheme) apply(sub Subst) Types {
 type TypeEnv map[string]Scheme
 
 func (env *TypeEnv) generalize(t Type) Scheme {
-	tftv := t.ftv()
-	eftv := env.ftv()
-	vars := make([]string, 0, len(tftv))
-	for _, x := range tftv {
-		if !contains(eftv, x) {
-			vars = append(vars, x)
-		}
+	vars := t.ftv()
+	for x := range env.ftv() {
+		delete(vars, x)
 	}
 	return Scheme{
 		vars: vars,
@@ -189,13 +183,11 @@ func (env *TypeEnv) generalize(t Type) Scheme {
 	}
 }
 
-func (env *TypeEnv) ftv() []string {
-	ret := make([]string, 0, len(*env))
+func (env *TypeEnv) ftv() map[string]struct{} {
+	ret := make(map[string]struct{}, len(*env))
 	for _, s := range *env {
-		for _, v := range s.ftv() {
-			if !contains(ret, v) {
-				ret = append(ret, v)
-			}
+		for v := range s.ftv() {
+			ret[v] = struct{}{}
 		}
 	}
 	return ret
@@ -220,7 +212,7 @@ func (ti *TI) newTypeVar(s string) Type {
 
 func (ti *TI) instantiate(s Scheme) Type {
 	m := make(map[string]Type, len(s.vars))
-	for _, v := range s.vars {
+	for v := range s.vars {
 		m[v] = ti.newTypeVar("a")
 	}
 	return s.t.apply(m).(Type)
@@ -230,7 +222,7 @@ func (ti *TI) varBind(u string, t Type) Subst {
 	if x, ok := t.(*TVar); ok && x.name == u {
 		return nil
 	}
-	if !contains(t.ftv(), u) {
+	if _, found := t.ftv()[u]; !found {
 		return Subst{u: t}
 	}
 	panic(fmt.Sprintf("occur check fails: %s vs. %v", u, t))

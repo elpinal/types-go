@@ -8,11 +8,11 @@ import (
 func TestTypeFTV(t *testing.T) {
 	tests := []struct {
 		t    Type
-		want []string
+		want map[string]struct{}
 	}{
 		{
 			t:    &TVar{name: "a"},
-			want: []string{"a"},
+			want: map[string]struct{}{"a": {}},
 		},
 		{
 			t:    &TInt{},
@@ -20,7 +20,7 @@ func TestTypeFTV(t *testing.T) {
 		},
 		{
 			t:    &TFun{arg: &TInt{}, body: &TVar{name: "a"}},
-			want: []string{"a"},
+			want: map[string]struct{}{"a": {}},
 		},
 	}
 	for _, test := range tests {
@@ -88,7 +88,7 @@ func TestComposeSubst(t *testing.T) {
 
 func TestTypeEnvFTV(t *testing.T) {
 	s := Scheme{
-		vars: []string{"a"},
+		vars: map[string]struct{}{"a": {}},
 		t: &TFun{
 			&TVar{"b"},
 			&TVar{"a"},
@@ -97,7 +97,7 @@ func TestTypeEnvFTV(t *testing.T) {
 	m := map[string]Scheme{"b": s}
 	e := TypeEnv(m)
 	got := e.ftv()
-	want := []string{"b"}
+	want := map[string]struct{}{"b": {}}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("ftv on TypeEnv: got %v, want %v", got, want)
 	}
@@ -105,7 +105,7 @@ func TestTypeEnvFTV(t *testing.T) {
 
 func TestTypeEnvApply(t *testing.T) {
 	s := Scheme{
-		vars: []string{"a"},
+		vars: map[string]struct{}{"a": {}},
 		t: &TFun{&TVar{"a"},
 			&TVar{"c"},
 		},
@@ -118,7 +118,7 @@ func TestTypeEnvApply(t *testing.T) {
 	got := e.apply(m).(*TypeEnv)
 	want := &TypeEnv{
 		"b": Scheme{
-			vars: []string{("a")},
+			vars: map[string]struct{}{"a": {}},
 			t: &TFun{&TVar{"a"},
 				&TVar{"a"},
 			},
