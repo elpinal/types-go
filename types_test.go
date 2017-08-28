@@ -128,3 +128,38 @@ func TestTypeEnvApply(t *testing.T) {
 		t.Errorf("apply on TypeEnv: got %v, want %v", got, want)
 	}
 }
+
+func TestTINewTypeVar(t *testing.T) {
+	tests := []struct {
+		prefix string
+		want   string
+	}{
+		{
+			prefix: "a",
+			want:   "a0",
+		},
+		{
+			prefix: "a",
+			want:   "a1",
+		},
+		{
+			prefix: "a",
+			want:   "a2",
+		},
+		{
+			prefix: "b",
+			want:   "b3",
+		},
+		{
+			prefix: "a",
+			want:   "a4",
+		},
+	}
+	ti := TI{}
+	for _, test := range tests {
+		got := ti.newTypeVar(test.prefix).(*TVar).name
+		if got != test.want {
+			t.Errorf("TI.newTypeVar: got %v, want %v", got, test.want)
+		}
+	}
+}
