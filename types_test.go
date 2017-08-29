@@ -115,8 +115,8 @@ func TestTypeEnvApply(t *testing.T) {
 		"a": &TVar{"d"},
 	}
 	e := TypeEnv{"b": s}
-	got := e.apply(m).(*TypeEnv)
-	want := &TypeEnv{
+	got := e.apply(m).(TypeEnv)
+	want := TypeEnv{
 		"b": Scheme{
 			vars: []string{("a")},
 			t: &TFun{&TVar{"a"},

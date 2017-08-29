@@ -127,15 +127,15 @@ type Subst map[string]Type
 
 // compose composes two Subst.
 // Note that this method can update a receiver's value.
-func (s *Subst) compose(s0 Subst) Subst {
-	if len(*s) == 0 {
+func (s Subst) compose(s0 Subst) Subst {
+	if len(s) == 0 {
 		return s0
 	}
 	m := make(Subst, len(s0))
 	for k, v := range s0 {
-		m[k] = v.apply(*s).(Type)
+		m[k] = v.apply(s).(Type)
 	}
-	for k, v := range *s {
+	for k, v := range s {
 		if _, found := m[k]; !found {
 			m[k] = v
 		}
@@ -174,7 +174,7 @@ func (s *Scheme) apply(sub Subst) Types {
 
 type TypeEnv map[string]Scheme
 
-func (env *TypeEnv) generalize(t Type) Scheme {
+func (env TypeEnv) generalize(t Type) Scheme {
 	tftv := t.ftv()
 	eftv := env.ftv()
 	vars := make([]string, 0, len(tftv))
@@ -189,9 +189,9 @@ func (env *TypeEnv) generalize(t Type) Scheme {
 	}
 }
 
-func (env *TypeEnv) ftv() []string {
-	ret := make([]string, 0, len(*env))
-	for _, s := range *env {
+func (env TypeEnv) ftv() []string {
+	ret := make([]string, 0, len(env))
+	for _, s := range env {
 		for _, v := range s.ftv() {
 			if !contains(ret, v) {
 				ret = append(ret, v)
@@ -201,9 +201,9 @@ func (env *TypeEnv) ftv() []string {
 	return ret
 }
 
-func (env *TypeEnv) apply(s Subst) Types {
-	for k, v := range *env {
-		(*env)[k] = *v.apply(s).(*Scheme)
+func (env TypeEnv) apply(s Subst) Types {
+	for k, v := range env {
+		env[k] = *v.apply(s).(*Scheme)
 	}
 	return env
 }
@@ -291,7 +291,7 @@ func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type, error) {
 		if err != nil {
 			return nil, nil, err
 		}
-		s2, t2, err := ti.ti(*env.apply(s1).(*TypeEnv), e.arg)
+		s2, t2, err := ti.ti(env.apply(s1).(TypeEnv), e.arg)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -320,10 +320,10 @@ func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type, error) {
 		if err != nil {
 			return nil, nil, err
 		}
-		t := env.apply(s1).(*TypeEnv).generalize(t1)
+		t := env.apply(s1).(TypeEnv).generalize(t1)
 		x, ok := env[e.name]
 		env[e.name] = t
-		s2, t2, err := ti.ti(*env.apply(s1).(*TypeEnv), e.expr)
+		s2, t2, err := ti.ti(env.apply(s1).(TypeEnv), e.expr)
 		if err != nil {
 			return nil, nil, err
 		}
