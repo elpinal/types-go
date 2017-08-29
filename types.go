@@ -45,13 +45,27 @@ func (b *TBool) ftv() []string {
 }
 
 func (f *TFun) ftv() []string {
-	vars := f.arg.ftv()
-	for _, v := range f.body.ftv() {
-		if !contains(vars, v) {
-			vars = append(vars, v)
+	vars1 := f.arg.ftv()
+	vars2 := f.body.ftv()
+	switch {
+	case len(vars1) == 0:
+		return vars2
+	case len(vars2) == 0:
+		return vars1
+	case len(vars1) < len(vars2):
+		for _, v := range vars1 {
+			if !contains(vars2, v) {
+				vars2 = append(vars2, v)
+			}
+		}
+		return vars2
+	}
+	for _, v := range vars2 {
+		if !contains(vars1, v) {
+			vars1 = append(vars1, v)
 		}
 	}
-	return vars
+	return vars1
 }
 
 func contains(xs []string, x string) bool {
