@@ -132,13 +132,11 @@ func (s Subst) compose(s0 Subst) Subst {
 		return s0
 	}
 	m := make(Subst, len(s0))
+	for k, v := range s {
+		m[k] = v
+	}
 	for k, v := range s0 {
 		m[k] = v.apply(s).(Type)
-	}
-	for k, v := range s {
-		if _, found := m[k]; !found {
-			m[k] = v
-		}
 	}
 	return m
 }
