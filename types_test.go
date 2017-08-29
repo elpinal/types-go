@@ -201,6 +201,55 @@ func TestTITypeInference(t *testing.T) {
 			expr: &ELet{"length", &EAbs{"xs", &EInt{12}}, &EApp{&EVar{"length"}, &EVar{"length"}}},
 			want: &TInt{},
 		},
+		{
+			name: "polymorphic function",
+			env:  TypeEnv{},
+			expr: &ELet{"succ", &EAbs{"n", &EInt{12}}, &ELet{
+				"x",
+				&EApp{&EVar{"succ"}, &EInt{11}},
+				&ELet{
+					"double",
+					&EAbs{
+						"f",
+						&EAbs{
+							"x",
+							&EApp{
+								&EVar{"f"},
+								&EApp{
+									&EVar{"f"},
+									&EVar{"x"},
+								},
+							},
+						},
+					},
+					&ELet{
+						"a",
+						&EApp{
+							&EApp{
+								&EVar{"double"},
+								&EVar{"succ"},
+							},
+							&EInt{12},
+						},
+						&ELet{
+							"b",
+							&EApp{
+								&EApp{
+									&EVar{"double"},
+									&EAbs{
+										"b",
+										&EVar{"b"},
+									},
+								},
+								&EBool{false},
+							},
+							&EVar{"double"},
+						},
+					},
+				},
+			}},
+			want: &TFun{&TFun{&TVar{"a27"}, &TVar{"a28"}}, &TFun{&TVar{"a27"}, &TVar{"a28"}}},
+		},
 	}
 	ti := TI{}
 	for _, test := range tests {
