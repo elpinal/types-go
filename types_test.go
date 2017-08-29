@@ -204,7 +204,10 @@ func TestTITypeInference(t *testing.T) {
 	}
 	ti := TI{}
 	for _, test := range tests {
-		got := ti.TypeInference(test.env, test.expr)
+		got, err := ti.TypeInference(test.env, test.expr)
+		if err != nil {
+			t.Errorf("%s: TypeInference: %v", err)
+		}
 		if !reflect.DeepEqual(got, test.want) {
 			t.Errorf("%s: TypeInference = %#v; want %#v", test.name, got, test.want)
 		}
@@ -248,7 +251,7 @@ func BenchmarkTITypeInferenceBigExpr(b *testing.B) {
 
 func BenchmarkTFV(b *testing.B) {
 	ti := TI{}
-	t := ti.TypeInference(TypeEnv{}, &EAbs{"x", &EApp{&EApp{bigExpr, &EInt{}}, &EAbs{"x", bigExpr}}})
+	t, _ := ti.TypeInference(TypeEnv{}, &EAbs{"x", &EApp{&EApp{bigExpr, &EInt{}}, &EAbs{"x", bigExpr}}})
 	for i := 0; i < b.N; i++ {
 		t.ftv()
 	}
@@ -256,8 +259,8 @@ func BenchmarkTFV(b *testing.B) {
 
 func BenchmarkMGU(b *testing.B) {
 	ti := TI{}
-	t := ti.TypeInference(TypeEnv{}, &EAbs{"x", &EApp{&EApp{bigExpr, &EInt{}}, &EAbs{"x", bigExpr}}})
-	t0 := ti.TypeInference(TypeEnv{}, &EAbs{"x", &EApp{&EApp{bigExpr, &EInt{}}, &EAbs{"x", bigExpr}}})
+	t, _ := ti.TypeInference(TypeEnv{}, &EAbs{"x", &EApp{&EApp{bigExpr, &EInt{}}, &EAbs{"x", bigExpr}}})
+	t0, _ := ti.TypeInference(TypeEnv{}, &EAbs{"x", &EApp{&EApp{bigExpr, &EInt{}}, &EAbs{"x", bigExpr}}})
 	for i := 0; i < b.N; i++ {
 		ti.mgu(t, t0)
 	}

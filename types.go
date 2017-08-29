@@ -349,10 +349,10 @@ func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type, error) {
 	panic("unreachable")
 }
 
-func (ti *TI) TypeInference(env TypeEnv, expr Expr) Type {
+func (ti *TI) TypeInference(env TypeEnv, expr Expr) (Type, error) {
 	s, t, err := ti.ti(env, expr)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return t.apply(s).(Type)
+	return t.apply(s).(Type), nil
 }
