@@ -303,14 +303,16 @@ func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type, error) {
 		return s.compose(s1), tv.apply(s3).(Type), nil
 	case *EAbs:
 		tv := ti.newTypeVar("a")
-		env1 := make(TypeEnv, len(env))
-		for k, v := range env {
-			env1[k] = v
-		}
-		env1[e.param] = Scheme{t: tv}
-		s1, t1, err := ti.ti(env1, e.expr)
+		x, ok := env[e.param]
+		env[e.param] = Scheme{t: tv}
+		s1, t1, err := ti.ti(env, e.expr)
 		if err != nil {
 			return nil, nil, err
+		}
+		if ok {
+			env[e.param] = x
+		} else {
+			delete(env, e.param)
 		}
 		return s1, &TFun{arg: tv.apply(s1).(Type), body: t1}, nil
 	case *ELet:
@@ -319,14 +321,16 @@ func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type, error) {
 			return nil, nil, err
 		}
 		t := env.apply(s1).(*TypeEnv).generalize(t1)
-		env1 := make(TypeEnv, len(env))
-		for k, v := range env {
-			env1[k] = v
-		}
-		env1[e.name] = t
-		s2, t2, err := ti.ti(*env1.apply(s1).(*TypeEnv), e.expr)
+		x, ok := env[e.name]
+		env[e.name] = t
+		s2, t2, err := ti.ti(*env.apply(s1).(*TypeEnv), e.expr)
 		if err != nil {
 			return nil, nil, err
+		}
+		if ok {
+			env[e.name] = x
+		} else {
+			delete(env, e.name)
 		}
 		return s1.compose(s2), t2, nil
 	}
