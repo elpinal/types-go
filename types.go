@@ -131,7 +131,7 @@ func (s *Subst) compose(s0 Subst) Subst {
 	if len(*s) == 0 {
 		return s0
 	}
-	m := make(map[string]Type, len(s0))
+	m := make(Subst, len(s0))
 	for k, v := range s0 {
 		m[k] = v.apply(*s).(Type)
 	}
@@ -160,7 +160,7 @@ func (s *Scheme) ftv() []string {
 }
 
 func (s *Scheme) apply(sub Subst) Types {
-	m := make(map[string]Type, len(sub))
+	m := make(Subst, len(sub))
 	for k, v := range sub {
 		if !contains(s.vars, k) {
 			m[k] = v
@@ -219,7 +219,7 @@ func (ti *TI) newTypeVar(s string) Type {
 }
 
 func (ti *TI) instantiate(s Scheme) Type {
-	m := make(map[string]Type, len(s.vars))
+	m := make(Subst, len(s.vars))
 	for _, v := range s.vars {
 		m[v] = ti.newTypeVar("a")
 	}
