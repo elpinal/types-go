@@ -104,30 +104,30 @@ type Expr interface {
 }
 
 type EVar struct {
-	name string
+	Name string
 }
 
 type EInt struct {
-	value int
+	Value int
 }
 
 type EBool struct {
-	value bool
+	Value bool
 }
 
 type EApp struct {
-	fn, arg Expr
+	Fn, Arg Expr
 }
 
 type EAbs struct {
-	param string
-	expr  Expr
+	Param string
+	Body  Expr
 }
 
 type ELet struct {
-	name string
-	bind Expr
-	expr Expr
+	Name string
+	Bind Expr
+	Body Expr
 }
 
 type EIf struct {
@@ -295,9 +295,9 @@ func (ti *TI) mgu(t1, t2 Type) (Subst, error) {
 func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type, error) {
 	switch e := expr.(type) {
 	case *EVar:
-		sigma, ok := env[e.name]
+		sigma, ok := env[e.Name]
 		if !ok {
-			return nil, nil, fmt.Errorf("unbound variable: %s", e.name)
+			return nil, nil, fmt.Errorf("unbound variable: %s", e.Name)
 		}
 		return nil, ti.instantiate(sigma), nil
 	case *EInt:
@@ -306,11 +306,11 @@ func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type, error) {
 		return nil, &TBool{}, nil
 	case *EApp:
 		tv := ti.newTypeVar("a")
-		s1, t1, err := ti.ti(env, e.fn)
+		s1, t1, err := ti.ti(env, e.Fn)
 		if err != nil {
 			return nil, nil, err
 		}
-		s2, t2, err := ti.ti(env.apply(s1).(TypeEnv), e.arg)
+		s2, t2, err := ti.ti(env.apply(s1).(TypeEnv), e.Arg)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -322,34 +322,34 @@ func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type, error) {
 		return s.compose(s1), tv.apply(s3).(Type), nil
 	case *EAbs:
 		tv := ti.newTypeVar("a")
-		x, ok := env[e.param]
-		env[e.param] = Scheme{t: tv}
-		s1, t1, err := ti.ti(env, e.expr)
+		x, ok := env[e.Param]
+		env[e.Param] = Scheme{t: tv}
+		s1, t1, err := ti.ti(env, e.Body)
 		if err != nil {
 			return nil, nil, err
 		}
 		if ok {
-			env[e.param] = x
+			env[e.Param] = x
 		} else {
-			delete(env, e.param)
+			delete(env, e.Param)
 		}
 		return s1, &TFun{arg: tv.apply(s1).(Type), body: t1}, nil
 	case *ELet:
-		s1, t1, err := ti.ti(env, e.bind)
+		s1, t1, err := ti.ti(env, e.Bind)
 		if err != nil {
 			return nil, nil, err
 		}
 		t := env.apply(s1).(TypeEnv).generalize(t1)
-		x, ok := env[e.name]
-		env[e.name] = t
-		s2, t2, err := ti.ti(env.apply(s1).(TypeEnv), e.expr)
+		x, ok := env[e.Name]
+		env[e.Name] = t
+		s2, t2, err := ti.ti(env.apply(s1).(TypeEnv), e.Body)
 		if err != nil {
 			return nil, nil, err
 		}
 		if ok {
-			env[e.name] = x
+			env[e.Name] = x
 		} else {
-			delete(env, e.name)
+			delete(env, e.Name)
 		}
 		return s1.compose(s2), t2, nil
 	case *EIf:
