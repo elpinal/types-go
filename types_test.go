@@ -19,7 +19,7 @@ func TestTypeFTV(t *testing.T) {
 			want: nil,
 		},
 		{
-			t:    &TFun{arg: &TInt{}, body: &TVar{name: "a"}},
+			t:    &TFun{Arg: &TInt{}, Body: &TVar{name: "a"}},
 			want: []string{"a"},
 		},
 	}
@@ -47,9 +47,9 @@ func TestTypeApply(t *testing.T) {
 			want: &TInt{},
 		},
 		{
-			t:    &TFun{arg: &TVar{name: "c"}, body: &TVar{name: "b"}},
+			t:    &TFun{Arg: &TVar{name: "c"}, Body: &TVar{name: "b"}},
 			s:    Subst{"c": &TVar{name: "a"}},
-			want: &TFun{arg: &TVar{name: "a"}, body: &TVar{name: "b"}},
+			want: &TFun{Arg: &TVar{name: "a"}, Body: &TVar{name: "b"}},
 		},
 	}
 	for _, test := range tests {

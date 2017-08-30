@@ -24,7 +24,7 @@ type TInt struct{}
 type TBool struct{}
 
 type TFun struct {
-	arg, body Type
+	Arg, Body Type
 }
 
 func (v *TVar) Type()  {}
@@ -45,8 +45,8 @@ func (b *TBool) ftv() []string {
 }
 
 func (f *TFun) ftv() []string {
-	vars1 := f.arg.ftv()
-	vars2 := f.body.ftv()
+	vars1 := f.Arg.ftv()
+	vars2 := f.Body.ftv()
 	switch {
 	case len(vars1) == 0:
 		return vars2
@@ -94,8 +94,8 @@ func (b *TBool) apply(s Subst) Types {
 
 func (f *TFun) apply(s Subst) Types {
 	return &TFun{
-		arg:  f.arg.apply(s).(Type),
-		body: f.body.apply(s).(Type),
+		Arg:  f.Arg.apply(s).(Type),
+		Body: f.Body.apply(s).(Type),
 	}
 }
 
@@ -259,11 +259,11 @@ func (ti *TI) mgu(t1, t2 Type) (Subst, error) {
 	switch x := t1.(type) {
 	case *TFun:
 		if y, ok := t2.(*TFun); ok {
-			s1, err := ti.mgu(x.arg, y.arg)
+			s1, err := ti.mgu(x.Arg, y.Arg)
 			if err != nil {
 				return nil, err
 			}
-			s2, err := ti.mgu(x.body.apply(s1).(Type), y.body.apply(s1).(Type))
+			s2, err := ti.mgu(x.Body.apply(s1).(Type), y.Body.apply(s1).(Type))
 			if err != nil {
 				return nil, err
 			}
@@ -314,7 +314,7 @@ func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type, error) {
 		if err != nil {
 			return nil, nil, err
 		}
-		s3, err := ti.mgu(t1.apply(s2).(Type), &TFun{arg: t2, body: tv})
+		s3, err := ti.mgu(t1.apply(s2).(Type), &TFun{Arg: t2, Body: tv})
 		if err != nil {
 			return nil, nil, err
 		}
@@ -333,7 +333,7 @@ func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type, error) {
 		} else {
 			delete(env, e.Param)
 		}
-		return s1, &TFun{arg: tv.apply(s1).(Type), body: t1}, nil
+		return s1, &TFun{Arg: tv.apply(s1).(Type), Body: t1}, nil
 	case *ELet:
 		s1, t1, err := ti.ti(env, e.Bind)
 		if err != nil {
