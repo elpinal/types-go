@@ -184,6 +184,12 @@ func TestTITypeInference(t *testing.T) {
 			want: &TInt{},
 		},
 		{
+			name: "conditional branch",
+			env:  TypeEnv{},
+			expr: &EIf{&EBool{true}, &EInt{12}, &EInt{24}},
+			want: &TInt{},
+		},
+		{
 			name: "let function",
 			env:  TypeEnv{},
 			expr: &ELet{"f", &EAbs{"x", &EVar{"x"}}, &EVar{"f"}},
@@ -193,7 +199,7 @@ func TestTITypeInference(t *testing.T) {
 			name: "let function and apply it",
 			env:  TypeEnv{},
 			expr: &ELet{"x", &EAbs{"x", &EVar{"x"}}, &EApp{&EVar{"x"}, &EVar{"x"}}},
-			want: &TFun{&TVar{"a5"}, &TVar{"a5"}},
+			want: &TFun{&TVar{"a3"}, &TVar{"a3"}},
 		},
 		{
 			name: "let function and ignore an argument",
@@ -248,11 +254,11 @@ func TestTITypeInference(t *testing.T) {
 					},
 				},
 			}},
-			want: &TFun{&TFun{&TVar{"a27"}, &TVar{"a28"}}, &TFun{&TVar{"a27"}, &TVar{"a28"}}},
+			want: &TFun{&TFun{&TVar{"a17"}, &TVar{"a18"}}, &TFun{&TVar{"a17"}, &TVar{"a18"}}},
 		},
 	}
-	ti := TI{}
 	for _, test := range tests {
+		ti := TI{}
 		got, err := ti.TypeInference(test.env, test.expr)
 		if err != nil {
 			t.Errorf("%s: TypeInference: %v", err)

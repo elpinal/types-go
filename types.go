@@ -130,12 +130,19 @@ type ELet struct {
 	expr Expr
 }
 
+type EIf struct {
+	cond Expr
+	e1   Expr
+	e2   Expr
+}
+
 func (e *EVar) Expr()  {}
 func (e *EInt) Expr()  {}
 func (e *EBool) Expr() {}
 func (e *EApp) Expr()  {}
 func (e *EAbs) Expr()  {}
 func (e *ELet) Expr()  {}
+func (e *EIf) Expr()   {}
 
 type Subst map[string]Type
 
@@ -345,6 +352,29 @@ func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type, error) {
 			delete(env, e.name)
 		}
 		return s1.compose(s2), t2, nil
+	case *EIf:
+		s1, t1, err := ti.ti(env, e.cond)
+		if err != nil {
+			return nil, nil, err
+		}
+		s2, err := ti.mgu(t1.apply(s1).(Type), &TBool{})
+		if err != nil {
+			return nil, nil, err
+		}
+		s3, t2, err := ti.ti(env.apply(s2).(TypeEnv), e.e1)
+		if err != nil {
+			return nil, nil, err
+		}
+		s4, t3, err := ti.ti(env.apply(s3).(TypeEnv), e.e2)
+		if err != nil {
+			return nil, nil, err
+		}
+		s5, err := ti.mgu(t2.apply(s4).(Type), t3.apply(s4).(Type))
+		if err != nil {
+			return nil, nil, err
+		}
+		s := s5.compose(s4).compose(s3).compose(s2).compose(s1)
+		return s, t3.apply(s5).(Type), nil
 	}
 	panic("unreachable")
 }
