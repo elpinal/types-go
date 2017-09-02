@@ -208,6 +208,12 @@ func TestTITypeInference(t *testing.T) {
 			want: &TInt{},
 		},
 		{
+			name: "list",
+			env:  TypeEnv{},
+			expr: &EList{&EInt{12}, &EList{&EInt{12}, &ENil{}}},
+			want: &TList{&TInt{}},
+		},
+		{
 			name: "polymorphic function",
 			env:  TypeEnv{},
 			expr: &ELet{"succ", &EAbs{"n", &EInt{12}}, &ELet{

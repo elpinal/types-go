@@ -74,7 +74,7 @@ func (f *TFun) ftv() []string {
 }
 
 func (l *TList) ftv() []string {
-	return l.ftv()
+	return l.Item.ftv()
 }
 
 func contains(xs []string, x string) bool {
@@ -153,7 +153,7 @@ type EIf struct {
 
 type EList struct {
 	Head Expr
-	Tail *EList
+	Tail Expr
 }
 
 type ENil struct{}
