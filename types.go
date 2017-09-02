@@ -27,10 +27,15 @@ type TFun struct {
 	Arg, Body Type
 }
 
+type TList struct {
+	Item Type
+}
+
 func (v *TVar) Type()  {}
 func (i *TInt) Type()  {}
 func (b *TBool) Type() {}
 func (f *TFun) Type()  {}
+func (l *TList) Type() {}
 
 func (v *TVar) ftv() []string {
 	return []string{v.name}
@@ -68,6 +73,10 @@ func (f *TFun) ftv() []string {
 	return vars1
 }
 
+func (l *TList) ftv() []string {
+	return l.ftv()
+}
+
 func contains(xs []string, x string) bool {
 	for _, y := range xs {
 		if x == y {
@@ -96,6 +105,12 @@ func (f *TFun) apply(s Subst) Types {
 	return &TFun{
 		Arg:  f.Arg.apply(s).(Type),
 		Body: f.Body.apply(s).(Type),
+	}
+}
+
+func (l *TList) apply(s Subst) Types {
+	return &TList{
+		Item: l.Item.apply(s).(Type),
 	}
 }
 
@@ -136,6 +151,13 @@ type EIf struct {
 	e2   Expr
 }
 
+type EList struct {
+	Head Expr
+	Tail *EList
+}
+
+type ENil struct{}
+
 func (e *EVar) Expr()  {}
 func (e *EInt) Expr()  {}
 func (e *EBool) Expr() {}
@@ -143,6 +165,8 @@ func (e *EApp) Expr()  {}
 func (e *EAbs) Expr()  {}
 func (e *ELet) Expr()  {}
 func (e *EIf) Expr()   {}
+func (e *EList) Expr() {}
+func (e *ENil) Expr()  {}
 
 type Subst map[string]Type
 
@@ -288,6 +312,13 @@ func (ti *TI) mgu(t1, t2 Type) (Subst, error) {
 		case *TBool:
 			return nil, nil
 		}
+	case *TList:
+		switch y := t2.(type) {
+		case *TVar:
+			return ti.varBind(y.name, t1)
+		case *TList:
+			return ti.mgu(x.Item, y.Item)
+		}
 	}
 	return nil, fmt.Errorf("types do not unify: %#v vs. %#v", t1, t2)
 }
@@ -375,6 +406,23 @@ func (ti *TI) ti(env TypeEnv, expr Expr) (Subst, Type, error) {
 		}
 		s := s5.compose(s4).compose(s3).compose(s2).compose(s1)
 		return s, t3.apply(s5).(Type), nil
+	case *EList:
+		s1, t1, err := ti.ti(env, e.Head)
+		if err != nil {
+			return nil, nil, err
+		}
+		s2, t2, err := ti.ti(env.apply(s1).(TypeEnv), e.Tail)
+		if err != nil {
+			return nil, nil, err
+		}
+		s3, err := ti.mgu(&TList{t1.apply(s2).(Type)}, t2.apply(s2).(Type))
+		if err != nil {
+			return nil, nil, err
+		}
+		return s3.compose(s2).compose(s1), t2.apply(s3).(Type), nil
+	case *ENil:
+		tv := ti.newTypeVar("a")
+		return nil, tv, nil
 	}
 	panic("unreachable")
 }
